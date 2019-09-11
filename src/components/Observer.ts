@@ -14,7 +14,8 @@ const flagMergingStrategy: {
   valid: 'every',
   invalid: 'some',
   pending: 'some',
-  validated: 'every'
+  validated: 'every',
+  changed: 'some'
 };
 
 function mergeFlags(lhs: any, rhs: any, strategy: string) {
@@ -214,9 +215,12 @@ export const ValidationObserver = (Vue as withObserverNode).extend({
     },
     removeProvider(id: string) {
       const provider = this.refs[id];
+      if (!provider) {
+        // FIXME: inactive refs are not being cleaned up.
+        return;
+      }
 
-      // save it for the next time.
-      if (provider && provider.persist) {
+      if (provider.persist) {
         /* istanbul ignore next */
         if (process.env.NODE_ENV !== 'production') {
           if (id.indexOf('_vee_') === 0) {
@@ -226,6 +230,7 @@ export const ValidationObserver = (Vue as withObserverNode).extend({
           }
         }
 
+        // save it for the next time.
         this.inactiveRefs[id] = {
           flags: provider.flags,
           errors: provider.messages,
